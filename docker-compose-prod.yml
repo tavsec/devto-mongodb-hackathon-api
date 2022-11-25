@@ -1,0 +1,15 @@
+version: "3.3"
+services:
+    app:
+        image: tavsec/devto-mongodb-hackathon-api:latest
+        ports:
+            -   "80:8080"
+        environment:
+            - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+            - MONGODB_URI=${MONGODB_URI}
+            - GOOGLE_CLOUD_STORAGE_BUCKET=${GOOGLE_CLOUD_STORAGE_BUCKET}
+            - MONGO_DB_DATABASE=${MONGO_DB_DATABASE}
+            - MONGO_DB_SEARCH_INDEX=${MONGO_DB_SEARCH_INDEX}
+            - GIN_MODE=release
+        volumes:
+            - ./application_default_credentials.json:/application_default_credentials.json

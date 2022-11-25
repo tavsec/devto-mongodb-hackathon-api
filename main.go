@@ -3,13 +3,15 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/tavsec/devto-mongodb-hackathon/Controllers"
-	"github.com/tavsec/devto-mongodb-hackathon/Services"
+	"github.com/tavsec/devto-mongodb-hackathon-api/Controllers"
+	"github.com/tavsec/devto-mongodb-hackathon-api/Services"
 	"log"
 )
 
 func init() {
+	Services.DotEnvInitialize()
 	Services.MongoDBInitialize()
+	Services.GoogleCloudStorageInitialize()
 }
 
 func main() {

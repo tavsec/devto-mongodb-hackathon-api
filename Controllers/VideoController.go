@@ -2,13 +2,13 @@ package Controllers
 
 import (
 	storage "cloud.google.com/go/storage"
-	video "cloud.google.com/go/videointelligence/apiv1"
-	videopb "cloud.google.com/go/videointelligence/apiv1/videointelligencepb"
+	video "cloud.google.com/go/videointelligence/apiv1p3beta1"
+	videopb "cloud.google.com/go/videointelligence/apiv1p3beta1/videointelligencepb"
 	"context"
 	"github.com/gin-gonic/gin"
 	pag "github.com/gobeam/mongo-go-pagination"
 	"github.com/google/uuid"
-	"github.com/tavsec/devto-mongodb-hackathon/Services"
+	"github.com/tavsec/devto-mongodb-hackathon-api/Services"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io"
@@ -18,6 +18,25 @@ import (
 	"path/filepath"
 	"time"
 )
+
+type Video struct {
+	Id        primitive.ObjectID `bson:"_id"`
+	Filename  string             `bson:"filename"`
+	Size      int                `bson:"size"`
+	UUID      string             `bson:"uuid"`
+	Features  []Feature          `bson:"features"`
+	SignedURL string
+}
+
+type Timestamp struct {
+	Start int64 `bson:"start"`
+	End   int64 `bson:"end"`
+}
+
+type Feature struct {
+	Description string      `bson:"description"`
+	Timestamps  []Timestamp `bson:"timestamps"`
+}
 
 func VideoStore(c *gin.Context) {
 	ctx := context.Background()
@@ -34,8 +53,6 @@ func VideoStore(c *gin.Context) {
 
 	fileUuid := uuid.New()
 
-	storageClient, _ := storage.NewClient(ctx)
-
 	f, uploadedFile, _ := c.Request.FormFile("video")
 
 	if filepath.Ext(uploadedFile.Filename) != ".mp4" {
@@ -45,7 +62,7 @@ func VideoStore(c *gin.Context) {
 		return
 	}
 
-	sw := storageClient.Bucket(os.Getenv("GOOGLE_CLOUD_STORAGE_BUCKET")).Object(fileUuid.String()).NewWriter(ctx)
+	sw := Services.StorageBucket.Object(fileUuid.String()).NewWriter(ctx)
 
 	_, err = io.Copy(sw, f)
 	err = sw.Close()
@@ -75,13 +92,12 @@ func VideoStore(c *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to annotate: %v", err)
 	}
-
 	result := resp.GetAnnotationResults()[0]
+
 	var featuresList []Feature
 	for _, annotation := range result.SegmentLabelAnnotations {
 
 		var timestamps []Timestamp
-
 		for _, segment := range annotation.Segments {
 			start := segment.Segment.StartTimeOffset.AsDuration()
 			end := segment.Segment.EndTimeOffset.AsDuration()
@@ -110,28 +126,9 @@ func VideoStore(c *gin.Context) {
 }
 
 type SearchBody struct {
-	Keyword string `json:"keyword"`
-	Page    int64  `json:"page"`
-	PerPage int64  `json:"perPage"`
-}
-
-type Video struct {
-	Id        primitive.ObjectID `bson:"_id"`
-	Filename  string             `bson:"filename"`
-	Size      int                `bson:"size"`
-	UUID      string             `bson:"uuid"`
-	Features  []Feature          `bson:"features"`
-	SignedURL string
-}
-
-type Timestamp struct {
-	Start int64 `bson:"start"`
-	End   int64 `bson:"end"`
-}
-
-type Feature struct {
-	Description string      `bson:"description"`
-	Timestamps  []Timestamp `bson:"timestamps"`
+	Keyword string `form:"keyword"`
+	Page    int64  `form:"page"`
+	PerPage int64  `form:"perPage"`
 }
 
 type PaginatedResult struct {
@@ -141,8 +138,9 @@ type PaginatedResult struct {
 
 func VideoSearch(c *gin.Context) {
 	var searchBody SearchBody
-	err := c.ShouldBindJSON(&searchBody)
+	err := c.BindQuery(&searchBody)
 	if err != nil {
+		println(err.Error())
 		err = c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}

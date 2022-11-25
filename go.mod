@@ -1,4 +1,4 @@
-module github.com/tavsec/devto-mongodb-hackathon
+module github.com/tavsec/devto-mongodb-hackathon-api
 
 go 1.19
 
@@ -8,6 +8,7 @@ require (
 	github.com/gin-gonic/gin v1.8.1
 	github.com/gobeam/mongo-go-pagination v0.0.8
 	github.com/google/uuid v1.3.0
+	github.com/joho/godotenv v1.3.0
 	go.mongodb.org/mongo-driver v1.11.0
 )
 
