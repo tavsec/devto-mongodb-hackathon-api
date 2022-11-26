@@ -1,5 +1,6 @@
 # devto-mongodb-hackathon-api
 API for my DevTo MongoDB hackathon project.
+https://dev.to/timotej_avsec/video-content-search-using-mongodb-atlas-search-and-google-machine-learning-1f32
 
 # Build
 Firstly, add you `application_default_credentials.json` to the source of the project. This will enable Google Cloud API.
